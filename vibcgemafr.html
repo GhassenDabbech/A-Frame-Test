@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Multi-Object Viewer</title>
+
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+
+    <script src="https://raw.githack.com/fcor/aframe-gesture-detector-component/master/dist/aframe-gesture-detector-component.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+        /* QR-Code oben rechts positionieren */
+        #qrcode {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 10;
+            background: white;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        .error-message {
+            color: red;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="qrcode"></div>
+
+    <a-scene 
+        webxr="optionalFeatures: hit-test;" 
+        gesture-detector
+        embedded 
+        style="width: 100vw; height: 100vh;">
+
+        <a-entity camera></a-entity>
+
+    </a-scene>
+
+    <script>
+        // 1. Modell-URL aus der Adresszeile auslesen (alles nach dem '?')
+        const modelUrl = window.location.search.substring(1);
+        const scene = document.querySelector('a-scene');
+
+        // Prüfen, ob eine valide Modell-URL übergeben wurde
+        if (modelUrl && modelUrl.trim() !== "") {
+            
+            // 2. Neues 3D-Objekt (Entity) erstellen
+            const arModel = document.createElement('a-entity');
+            
+            arModel.setAttribute('id', 'ar-object');
+            arModel.setAttribute('gltf-model', modelUrl);
+            
+            // Startposition: 0 (zentriert), 0 (Höhe), -1 (1 Meter vor dem User)
+            arModel.setAttribute('position', '0 0 -1');
+            
+            // Startgröße: Falls die Modelle der KI-Gruppe zu groß/klein sind, hier anpassen
+            arModel.setAttribute('scale', '1 1 1');
+            
+            // Touch-Gesten für dieses spezifische Objekt aktivieren
+            arModel.setAttribute('class', 'clickable');
+            arModel.setAttribute('gesture-handler', 'minScale: 0.2; maxScale: 3;');
+
+            // Objekt in die Szene einfügen
+            scene.appendChild(arModel);
+
+        } else {
+            // Fehlermeldung anzeigen, falls kein '?' in der URL ist
+            scene.style.display = "none";
+            const errorDiv = document.createElement('div');
+            errorDiv.className = "error-message";
+            errorDiv.innerText = "Fehler: Kein 3D-Modell in der URL angegeben! Nutze: url.html?https://pfad-zum-modell.glb";
+            document.body.appendChild(errorDiv);
+        }
+
+        // 3. QR-Code für die aktuelle URL generieren
+        new QRCode(document.getElementById("qrcode"), {
+            text: window.location.href,
+            width: 120,
+            height: 120,
+        });
+    </script>
+</body>
+</html>
